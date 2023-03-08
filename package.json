@@ -1,0 +1,30 @@
+{
+  "name": "web3-auto-retry-provider-https",
+  "version": "1.0.0",
+  "description": "Module to optimize performance web3 rpc connections over collection http/https",
+  "repository": "git@github.com:tuvudu/web3-auto-retry-provider-https.git",
+  "author": "Tuyen Vu Duc <tuyenvd596@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "ethereum",
+    "rpc",
+    "blockchain",
+    "providers",
+    "web3js"
+  ],
+  "scripts": {
+    "compile": "tsc -b tsconfig.json",
+    "prepare": "npm run compile"
+  },
+  "types": "types/index.d.ts",
+  "main": "lib/index.js",
+  "dependencies": {
+    "abortcontroller-polyfill": "^1.7.5",
+    "cross-fetch": "^3.1.5",
+    "es6-promise": "^4.2.8",
+    "web3-core-helpers": "^1.8.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  }
+}

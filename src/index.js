@@ -56,7 +56,7 @@ var HttpProvider = function HttpProvider(hosts, options) {
 
   // keepAlive is true unless explicitly set to false
   const keepAlive = options.keepAlive !== false;
-  this.host = this.hosts[0] || "http://localhost:8545";
+  this.host = this.hosts[0] || ["http://localhost:8545"];
   if (!this.agent) {
     if (this.host.substring(0, 5) === "https") {
       this.httpsAgent = new https.Agent({ keepAlive });
@@ -152,7 +152,7 @@ HttpProvider.prototype.send = function (payload, callback) {
       .then(function (data) {
         callback(null, data);
       })
-      .catch(function (error) {
+      .catch(function () {
         callback(errors.InvalidResponse(response));
       });
   };

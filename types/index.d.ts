@@ -44,6 +44,8 @@ export interface HttpProviderOptions {
 
 export class HttpProvider extends HttpProviderBase {
   host: string;
+  hosts: string[];
+  currentHostIndex: number;
 
   withCredentials?: boolean;
   timeout: number;
@@ -51,7 +53,7 @@ export class HttpProvider extends HttpProviderBase {
   agent?: HttpProviderAgent;
   connected: boolean;
 
-  constructor(host?: string, options?: HttpProviderOptions);
+  constructor(hosts?: string[], options?: HttpProviderOptions);
 
   send(
     payload: object,

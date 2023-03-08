@@ -1,9 +1,9 @@
 {
-  "name": "web3-auto-retry-provider-https",
+  "name": "web3-provider-https",
   "version": "1.0.0",
   "description": "Module to optimize performance web3 rpc connections over collection http/https",
-  "repository": "git@github.com:tuvudu/web3-auto-retry-provider-https.git",
-  "author": "Tuyen Vu Duc <tuyenvd596@gmail.com>",
+  "repository": "git@github.com:KYRDTeam/web3-https-provider.git",
+  "author": "Tuyen Vu Duc <tuyen.vu@krystal.app>",
   "license": "MIT",
   "keywords": [
     "ethereum",

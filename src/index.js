@@ -141,6 +141,9 @@ HttpProvider.prototype.send = function (payload, callback) {
     }, this.timeout);
   }
 
+  let triedCount = 0;
+  const that = this;
+
   var success = function (response) {
     if (this.timeoutId !== undefined) {
       clearTimeout(this.timeoutId);
@@ -150,28 +153,41 @@ HttpProvider.prototype.send = function (payload, callback) {
     response
       .json()
       .then(function (data) {
-        callback(null, data);
+        if (!!data.error && !data.id) {
+          that.currentHostIndex =
+            (that.currentHostIndex + 1) % that.hosts.length;
+          triedCount++;
+
+          if (triedCount < that.hosts.length) {
+            that.host = that.hosts[that.currentHostIndex];
+            fetch(that.host, options)
+              .then(success.bind(that))
+              .catch(failed.bind(that));
+
+            return;
+          } else {
+            callback(null, data);
+          }
+        } else {
+          callback(null, data);
+        }
       })
       .catch(function () {
         callback(errors.InvalidResponse(response));
       });
   };
 
-  let triedCount = 0;
-
-  const that = this;
-
   var failed = function (error) {
     if (this.timeoutId !== undefined) {
       clearTimeout(this.timeoutId);
     }
 
-    this.currentHostIndex = (this.currentHostIndex + 1) % this.hosts.length;
+    that.currentHostIndex = (that.currentHostIndex + 1) % that.hosts.length;
     triedCount++;
 
-    if (triedCount < this.hosts.length) {
-      this.host = this.hosts[this.currentHostIndex];
-      fetch(this.host, options)
+    if (triedCount < that.hosts.length) {
+      that.host = that.hosts[that.currentHostIndex];
+      fetch(that.host, options)
         .then(success.bind(that))
         .catch(failed.bind(that));
 

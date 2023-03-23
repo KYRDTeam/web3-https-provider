@@ -144,36 +144,72 @@ HttpProvider.prototype.send = function (payload, callback) {
   let triedCount = 0;
   const that = this;
 
+  const callToNextHost = function (callbackOutOfTime) {
+    that.currentHostIndex = (that.currentHostIndex + 1) % that.hosts.length;
+    triedCount++;
+
+    if (triedCount < that.hosts.length) {
+      that.host = that.hosts[that.currentHostIndex];
+      fetch(that.host, options).then(success).catch(failed);
+    } else {
+      callbackOutOfTime && callbackOutOfTime();
+    }
+    return;
+  };
+
+  let prevErrorResponse = "";
+
   var success = function (response) {
-    if (this.timeoutId !== undefined) {
-      clearTimeout(this.timeoutId);
+    if (that.timeoutId !== undefined) {
+      clearTimeout(that.timeoutId);
     }
 
     // Response is a stream data so should be awaited for json response
     response
       .json()
       .then(function (data) {
-        if (
-          !!data.error &&
-          (!data.id ||
-            (!!data.error.code &&
-              !!data.error.code.toString().match(/(^5\d{2}$)|401|429|403/gm)))
-        ) {
-          that.currentHostIndex =
-            (that.currentHostIndex + 1) % that.hosts.length;
-          triedCount++;
+        if (!data.error) {
+          callback(null, data);
+          return;
+        }
 
-          if (triedCount < that.hosts.length) {
-            that.host = that.hosts[that.currentHostIndex];
-            fetch(that.host, options)
-              .then(success.bind(that))
-              .catch(failed.bind(that));
+        if (!data.id) {
+          callToNextHost(function () {
+            callback(null, data);
+          });
+
+          return;
+        }
+
+        if (!!data.error.code) {
+          if (!!data.error.code.toString().match(/(^5\d{2}$)|401|429|403/gm)) {
+            callToNextHost(function () {
+              callback(null, data);
+            });
 
             return;
-          } else {
-            callback(null, data);
           }
-        } else {
+
+          if (prevErrorResponse === data.error.message) {
+            prevErrorResponse = "";
+            that.currentHostIndex =
+              (that.currentHostIndex - 1) % that.hosts.length;
+            triedCount--;
+            if (triedCount < that.hosts.length) {
+              that.host = that.hosts[that.currentHostIndex];
+            }
+            callback(null, data);
+            return;
+          }
+
+          if (!prevErrorResponse) {
+            prevErrorResponse = data.error.message;
+            callToNextHost(function () {
+              callback(null, data);
+            });
+            return;
+          }
+
           callback(null, data);
         }
       })
@@ -183,27 +219,16 @@ HttpProvider.prototype.send = function (payload, callback) {
   };
 
   var failed = function (error) {
-    if (this.timeoutId !== undefined) {
-      clearTimeout(this.timeoutId);
+    if (that.timeoutId !== undefined) {
+      clearTimeout(that.timeoutId);
     }
+    callToNextHost(function () {
+      if (error.name === "AbortError") {
+        callback(errors.ConnectionTimeout(that.timeout));
+      }
 
-    that.currentHostIndex = (that.currentHostIndex + 1) % that.hosts.length;
-    triedCount++;
-
-    if (triedCount < that.hosts.length) {
-      that.host = that.hosts[that.currentHostIndex];
-      fetch(that.host, options)
-        .then(success.bind(that))
-        .catch(failed.bind(that));
-
-      return;
-    }
-
-    if (error.name === "AbortError") {
-      callback(errors.ConnectionTimeout(this.timeout));
-    }
-
-    callback(errors.InvalidConnection(this.host));
+      callback(errors.InvalidConnection(that.host));
+    });
   };
 
   fetch(this.host, options).then(success.bind(this)).catch(failed.bind(this));

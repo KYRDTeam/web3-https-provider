@@ -153,7 +153,12 @@ HttpProvider.prototype.send = function (payload, callback) {
     response
       .json()
       .then(function (data) {
-        if (!!data.error && !data.id) {
+        if (
+          !!data.error &&
+          (!data.id ||
+            (!!data.error.code &&
+              !!data.error.code.toString().match(/(^5\d{2}$)|401|429|403/gm)))
+        ) {
           that.currentHostIndex =
             (that.currentHostIndex + 1) % that.hosts.length;
           triedCount++;

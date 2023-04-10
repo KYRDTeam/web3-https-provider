@@ -119,6 +119,10 @@ HttpProvider.prototype.send = function (payload, callback) {
     });
   }
 
+  if (this.host && this.host.includes("krys.io")) {
+    headers["X-Client-Type"] = "web";
+  }
+
   // Default headers
   if (!headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";

@@ -119,10 +119,6 @@ HttpProvider.prototype.send = function (payload, callback) {
     });
   }
 
-  if (this.host && this.host.includes("krys.io")) {
-    headers["X-Client-Type"] = "web";
-  }
-
   // Default headers
   if (!headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
@@ -154,6 +150,7 @@ HttpProvider.prototype.send = function (payload, callback) {
 
     if (triedCount < that.hosts.length) {
       that.host = that.hosts[that.currentHostIndex];
+
       if (that.host && that.host.includes("krys.io")) {
         options.headers["X-Client-Type"] = "web";
       } else {
@@ -206,6 +203,12 @@ HttpProvider.prototype.send = function (payload, callback) {
             triedCount--;
             if (triedCount < that.hosts.length) {
               that.host = that.hosts[that.currentHostIndex];
+
+              if (that.host && that.host.includes("krys.io")) {
+                options.headers["X-Client-Type"] = "web";
+              } else {
+                delete options.headers["X-Client-Type"];
+              }
             }
             callback(null, data);
             return;
@@ -239,6 +242,12 @@ HttpProvider.prototype.send = function (payload, callback) {
       callback(errors.InvalidConnection(that.host));
     });
   };
+
+  if (this.host && this.host.includes("krys.io")) {
+    options.headers["X-Client-Type"] = "web";
+  } else {
+    delete options.headers["X-Client-Type"];
+  }
 
   fetch(this.host, options).then(success.bind(this)).catch(failed.bind(this));
 };

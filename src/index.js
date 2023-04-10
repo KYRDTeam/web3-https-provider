@@ -154,6 +154,11 @@ HttpProvider.prototype.send = function (payload, callback) {
 
     if (triedCount < that.hosts.length) {
       that.host = that.hosts[that.currentHostIndex];
+      if (that.host && that.host.includes("krys.io")) {
+        options.headers["X-Client-Type"] = "web";
+      } else {
+        delete options.headers["X-Client-Type"];
+      }
       fetch(that.host, options).then(success).catch(failed);
     } else {
       callbackOutOfTime && callbackOutOfTime();

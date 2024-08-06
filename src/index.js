@@ -151,7 +151,7 @@ HttpProvider.prototype.send = function (payload, callback) {
     if (triedCount < that.hosts.length) {
       that.host = that.hosts[that.currentHostIndex];
 
-      if (that.host && that.host.includes("krys.io")) {
+      if (that.host && that.host.includes("krystal.app")) {
         options.headers["X-Client-Type"] = "web";
       } else {
         delete options.headers["X-Client-Type"];
@@ -204,7 +204,7 @@ HttpProvider.prototype.send = function (payload, callback) {
             if (triedCount < that.hosts.length) {
               that.host = that.hosts[that.currentHostIndex];
 
-              if (that.host && that.host.includes("krys.io")) {
+              if (that.host && that.host.includes("krystal.app")) {
                 options.headers["X-Client-Type"] = "web";
               } else {
                 delete options.headers["X-Client-Type"];
@@ -243,7 +243,7 @@ HttpProvider.prototype.send = function (payload, callback) {
     });
   };
 
-  if (this.host && this.host.includes("krys.io")) {
+  if (this.host && this.host.includes("krystal.app")) {
     options.headers["X-Client-Type"] = "web";
   } else {
     delete options.headers["X-Client-Type"];

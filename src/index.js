@@ -174,6 +174,7 @@ HttpProvider.prototype.send = function (payload, callback) {
     response
       .json()
       .then(function (data) {
+        that.host = host;
         if (!data.error) {
           callback(null, data);
           return;

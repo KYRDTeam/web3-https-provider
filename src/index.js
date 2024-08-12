@@ -83,10 +83,7 @@ HttpProvider.prototype.send = function (payload, callback) {
 
   if (typeof AbortController !== "undefined") {
     controller = new AbortController();
-  } else if (
-    typeof window !== "undefined" &&
-    typeof window.AbortController !== "undefined"
-  ) {
+  } else if (typeof window !== "undefined" && typeof window.AbortController !== "undefined") {
     // Some chrome version doesn't recognize new AbortController(); so we are using it from window instead
     // https://stackoverflow.com/questions/55718778/why-abortcontroller-is-not-defined
     controller = new window.AbortController();
@@ -142,21 +139,24 @@ HttpProvider.prototype.send = function (payload, callback) {
   }
 
   let triedCount = 0;
+  let currentHostIndex = 0;
+  let host = this.hosts[currentHostIndex];
+
   const that = this;
 
   const callToNextHost = function (callbackOutOfTime) {
-    that.currentHostIndex = (that.currentHostIndex + 1) % that.hosts.length;
+    currentHostIndex = (currentHostIndex + 1) % that.hosts.length;
     triedCount++;
 
     if (triedCount < that.hosts.length) {
-      that.host = that.hosts[that.currentHostIndex];
+      host = that.hosts[currentHostIndex];
 
-      if (that.host && that.host.includes("krystal.app")) {
+      if (host && host.includes("krystal.app")) {
         options.headers["X-Client-Type"] = "web";
       } else {
         delete options.headers["X-Client-Type"];
       }
-      fetch(that.host, options).then(success).catch(failed);
+      fetch(host, options).then(success).catch(failed);
     } else {
       callbackOutOfTime && callbackOutOfTime();
     }
@@ -174,6 +174,7 @@ HttpProvider.prototype.send = function (payload, callback) {
     response
       .json()
       .then(function (data) {
+        that.host = host;
         if (!data.error) {
           callback(null, data);
           return;
@@ -198,13 +199,12 @@ HttpProvider.prototype.send = function (payload, callback) {
 
           if (prevErrorResponse === data.error.message) {
             prevErrorResponse = "";
-            that.currentHostIndex =
-              (that.currentHostIndex - 1) % that.hosts.length;
+            currentHostIndex = (currentHostIndex - 1) % that.hosts.length;
             triedCount--;
             if (triedCount < that.hosts.length) {
-              that.host = that.hosts[that.currentHostIndex];
+              host = that.hosts[currentHostIndex];
 
-              if (that.host && that.host.includes("krystal.app")) {
+              if (host && that.host.includes("krystal.app")) {
                 options.headers["X-Client-Type"] = "web";
               } else {
                 delete options.headers["X-Client-Type"];
@@ -226,7 +226,7 @@ HttpProvider.prototype.send = function (payload, callback) {
         }
       })
       .catch(function () {
-        callback(errors.InvalidResponse(response));
+        callback({ message: errors.InvalidResponse(response).message, host: host });
       });
   };
 
@@ -236,20 +236,21 @@ HttpProvider.prototype.send = function (payload, callback) {
     }
     callToNextHost(function () {
       if (error.name === "AbortError") {
-        callback(errors.ConnectionTimeout(that.timeout));
+        callback({ message: errors.ConnectionTimeout(that.timeout).message, host: host });
       }
 
-      callback(errors.InvalidConnection(that.host));
+      const connectTimeoutErr = errors.InvalidConnection(that.timeout);
+      callback({ message: connectTimeoutErr.message, code: connectTimeoutErr.code, host: host });
     });
   };
 
-  if (this.host && this.host.includes("krystal.app")) {
+  if (host && host.includes("krystal.app")) {
     options.headers["X-Client-Type"] = "web";
   } else {
     delete options.headers["X-Client-Type"];
   }
 
-  fetch(this.host, options).then(success.bind(this)).catch(failed.bind(this));
+  fetch(host, options).then(success.bind(this)).catch(failed.bind(this));
 };
 
 HttpProvider.prototype.disconnect = function () {
